@@ -109,7 +109,7 @@ public class RayCastingApp extends Application {
         double sceneWidth = root.getWidth();
         double sceneHeight = root.getHeight();
 
-        double lineLength = Math.max(sceneWidth, sceneHeight);;
+        double lineLength = Math.max(sceneWidth, sceneHeight) + 100;;
         double radius2 = shadow_circle.getRadius();
 
         double rayEndX = centerX1 + lineLength * cosTheta;
