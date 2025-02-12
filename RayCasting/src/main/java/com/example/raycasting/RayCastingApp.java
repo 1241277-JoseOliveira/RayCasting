@@ -36,23 +36,13 @@ public class RayCastingApp extends Application {
     }
 
     private void generateLightRays(Pane root) {
-        double radius = 800;
-
-        double centerX = light_circle.getCenterX();
-        double centerY = light_circle.getCenterY();
-
         root.getChildren().removeAll(rays);
         rays.clear();
 
-        for (int i = 0; i <= 360; i++) {
+        for (int i = 0; i < 360; i++) {
             double angle = Math.toRadians(i);
-            double rayEndX = centerX + radius * Math.cos(angle);
-            double rayEndY = centerY + radius * Math.sin(angle);
 
-            Line ray = new Line(centerX, centerY, rayEndX, rayEndY);
-            ray.setStroke(Color.YELLOW);
-            root.getChildren().add(ray);
-            rays.add(ray);
+            generateLine(root, angle);
         }
     }
 
@@ -77,6 +67,17 @@ public class RayCastingApp extends Application {
         double radius1 = light_circle.getRadius();
         double radius2 = shadow_circle.getRadius();
 
+        double sceneWidth = light_circle.getParent().getLayoutBounds().getWidth();
+        double sceneHeight = light_circle.getParent().getLayoutBounds().getHeight();
+        
+        if (centerX1 - radius1 < 0) centerX1 = radius1;
+        if (centerX1 + radius1 > sceneWidth) centerX1 = sceneWidth - radius1;
+        if (centerY1 - radius1 < 0) centerY1 = radius1;
+        if (centerY1 + radius1 > sceneHeight) centerY1 = sceneHeight - radius1;
+
+        light_circle.setCenterX(centerX1);
+        light_circle.setCenterY(centerY1);
+
         double distance = Math.sqrt(Math.pow(centerX2 - centerX1, 2) + Math.pow(centerY2 - centerY1, 2));
 
         if (distance < (radius1 + radius2)) {
@@ -85,10 +86,68 @@ public class RayCastingApp extends Application {
             double newCenterX = centerX2 - (radius1 + radius2) * Math.cos(angle);
             double newCenterY = centerY2 - (radius1 + radius2) * Math.sin(angle);
 
+            if (newCenterX - radius1 < 0) newCenterX = radius1;
+            if (newCenterX + radius1 > sceneWidth) newCenterX = sceneWidth - radius1;
+            if (newCenterY - radius1 < 0) newCenterY = radius1;
+            if (newCenterY + radius1 > sceneHeight) newCenterY = sceneHeight - radius1;
+
             light_circle.setCenterX(newCenterX);
             light_circle.setCenterY(newCenterY);
         }
     }
+
+
+    private void generateLine(Pane root, double angle) {
+        double centerX1 = light_circle.getCenterX();
+        double centerY1 = light_circle.getCenterY();
+        double centerX2 = shadow_circle.getCenterX();
+        double centerY2 = shadow_circle.getCenterY();
+
+        double cosTheta = Math.cos(angle);
+        double sinTheta = Math.sin(angle);
+
+        double sceneWidth = root.getWidth();
+        double sceneHeight = root.getHeight();
+
+        double lineLength = Math.max(sceneWidth, sceneHeight);;
+        double radius2 = shadow_circle.getRadius();
+
+        double rayEndX = centerX1 + lineLength * cosTheta;
+        double rayEndY = centerY1 + lineLength * sinTheta;
+
+        double dx = rayEndX - centerX1;
+        double dy = rayEndY - centerY1;
+
+        double a = dx * dx + dy * dy;
+        double b = 2 * ((centerX1 - centerX2) * dx + (centerY1 - centerY2) * dy);
+        double c = (centerX1 - centerX2) * (centerX1 - centerX2) +
+                (centerY1 - centerY2) * (centerY1 - centerY2) - radius2 * radius2;
+
+        double discriminant = b * b - 4 * a * c;
+
+        if (discriminant >= 0) {
+            double sqrtD = Math.sqrt(discriminant);
+            double t1 = (-b + sqrtD) / (2 * a);
+            double t2 = (-b - sqrtD) / (2 * a);
+
+            double t = Math.min(t1, t2);
+            if (t < 0) {
+                t = Math.max(t1, t2);
+            }
+
+            if (t > 0 && t < 1) {
+                rayEndX = centerX1 + t * dx;
+                rayEndY = centerY1 + t * dy;
+            }
+        }
+
+        Line ray = new Line(centerX1, centerY1, rayEndX, rayEndY);
+        ray.setStroke(Color.YELLOW);
+        root.getChildren().add(ray);
+        rays.add(ray);
+    }
+
+
 
     @Override
     public void start(Stage stage) throws IOException {
